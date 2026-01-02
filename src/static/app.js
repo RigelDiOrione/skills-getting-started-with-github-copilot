@@ -100,6 +100,50 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // Handle unsubscribe button
+  const unsubscribeBtn = document.getElementById("unsubscribe-btn");
+  unsubscribeBtn.addEventListener("click", async () => {
+    const email = document.getElementById("email").value;
+    const activity = document.getElementById("activity").value;
+
+    if (!email || !activity) {
+      messageDiv.textContent = "Please provide an email and select an activity to unsubscribe.";
+      messageDiv.className = "error";
+      messageDiv.classList.remove("hidden");
+      setTimeout(() => messageDiv.classList.add("hidden"), 5000);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/activities/${encodeURIComponent(activity)}/unsubscribe?email=${encodeURIComponent(email)}`,
+        { method: "POST" }
+      );
+
+      const result = await response.json();
+
+      if (response.ok) {
+        messageDiv.textContent = result.message;
+        messageDiv.className = "success";
+        signupForm.reset();
+        fetchActivities();
+      } else {
+        messageDiv.textContent = result.detail || "An error occurred";
+        messageDiv.className = "error";
+      }
+
+      messageDiv.classList.remove("hidden");
+      setTimeout(() => {
+        messageDiv.classList.add("hidden");
+      }, 5000);
+    } catch (error) {
+      messageDiv.textContent = "Failed to unsubscribe. Please try again.";
+      messageDiv.className = "error";
+      messageDiv.classList.remove("hidden");
+      console.error("Error unsubscribing:", error);
+    }
+  });
+
   // Initialize app
   fetchActivities();
 });
