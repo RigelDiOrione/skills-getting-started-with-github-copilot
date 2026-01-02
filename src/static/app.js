@@ -4,32 +4,48 @@ document.addEventListener("DOMContentLoaded", () => {
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
 
+  // Function to render activity cards
+  function renderActivityCards(activities) {
+    activitiesList.innerHTML = "";
+
+    Object.entries(activities).forEach(([name, details]) => {
+      const activityCard = document.createElement("div");
+      activityCard.className = "activity-card";
+
+      const spotsLeft = details.max_participants - details.participants.length;
+      const participantsList = details.participants
+        .map(p => `<li>${p}</li>`)
+        .join("");
+
+      activityCard.innerHTML = `
+        <h4>${name}</h4>
+        <p>${details.description}</p>
+        <p><strong>Schedule:</strong> ${details.schedule}</p>
+        <p><strong>Participants (${details.participants.length}/${details.max_participants}):</strong></p>
+        <ul class="participants-list">
+          ${participantsList || "<li>No participants yet</li>"}
+        </ul>
+        <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+      `;
+
+      activitiesList.appendChild(activityCard);
+    });
+  }
+
   // Function to fetch activities from API
   async function fetchActivities() {
     try {
       const response = await fetch("/activities");
       const activities = await response.json();
 
-      // Clear loading message
-      activitiesList.innerHTML = "";
+      renderActivityCards(activities);
 
-      // Populate activities list
-      Object.entries(activities).forEach(([name, details]) => {
-        const activityCard = document.createElement("div");
-        activityCard.className = "activity-card";
+      // Refresh dropdown options
+      const defaultOption = activitySelect.querySelector('option[value=""]');
+      activitySelect.innerHTML = '';
+      activitySelect.appendChild(defaultOption);
 
-        const spotsLeft = details.max_participants - details.participants.length;
-
-        activityCard.innerHTML = `
-          <h4>${name}</h4>
-          <p>${details.description}</p>
-          <p><strong>Schedule:</strong> ${details.schedule}</p>
-          <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
-        `;
-
-        activitiesList.appendChild(activityCard);
-
-        // Add option to select dropdown
+      Object.entries(activities).forEach(([name]) => {
         const option = document.createElement("option");
         option.value = name;
         option.textContent = name;
@@ -62,6 +78,9 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        
+        // Refresh activities list
+        fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
